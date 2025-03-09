@@ -7,7 +7,6 @@
 //
 
 import Observation
-import SQLite3
 import SwiftUI
 import WebKit
 
@@ -83,6 +82,18 @@ struct Page: Identifiable, Hashable {
     }
 }
 
+func test() {
+    Task {
+        do {
+            let url = URL.downloadsDirectory.appending(path: "db.sqlite")
+            let db = try Database(url: url)
+        } catch {
+            print("Error", error)
+        }
+    }
+}
+
+
 struct ContentView: View {
     
     @State var store = Store()
@@ -126,6 +137,9 @@ struct ContentView: View {
                 ContentUnavailableView("No page selected", systemImage: "globe")
             }
         }
+        .onAppear(perform: {
+            test()
+        })
         .toolbar {
             ToolbarItem(placement: .principal) {
                 TextField("URL", text: $currentURLString)

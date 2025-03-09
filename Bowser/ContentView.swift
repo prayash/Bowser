@@ -10,6 +10,15 @@ import Observation
 import SwiftUI
 import WebKit
 
+struct Page: Identifiable, Hashable {
+    var id = UUID()
+    var url: URL
+    var title: String = "No title"
+    var fullText: String?
+    var lastUpadated: Date = .now
+    var snapshot: Data?
+}
+
 class Box<A> {
     var value: A
     init(_ value: A) {
@@ -66,11 +75,6 @@ struct WebView: NSViewRepresentable {
     }
 }
 
-struct Page: Identifiable, Hashable {
-    var id = UUID()
-    var url: URL
-}
-
 @Observable class Store {
     var pages: [Page] = [
         .init(url: URL(string: "https://prayash.io")!),
@@ -81,18 +85,6 @@ struct Page: Identifiable, Hashable {
         pages.append(Page(url: url))
     }
 }
-
-func test() {
-    Task {
-        do {
-            let url = URL.downloadsDirectory.appending(path: "db.sqlite")
-            let db = try Database(url: url)
-        } catch {
-            print("Error", error)
-        }
-    }
-}
-
 
 struct ContentView: View {
     

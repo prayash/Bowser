@@ -7,6 +7,7 @@
 //
 
 import Observation
+import SQLite3
 import SwiftUI
 import WebKit
 
@@ -22,7 +23,7 @@ struct NoWebViewError: Error {}
 struct WebViewProxy {
     var box: Box<WKWebView?> = Box(nil)
     
-    func takeSnapshot() async throws -> NSImage {
+    @MainActor func takeSnapshot() async throws -> NSImage {
         guard let w = box.value else { throw NoWebViewError() }
         return try await w.takeSnapshot(configuration: nil)
     }
@@ -44,15 +45,10 @@ struct WebViewReader<Content: View>: View {
 
 struct WebView: NSViewRepresentable {
     var url: URL
-    var snapshot: (_ takeSnapshot: @escaping () async -> NSImage) -> Void
+
+    class Coordinator: NSObject, WKNavigationDelegate {}
     
-    class Coordinator: NSObject, WKNavigationDelegate {
-        
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        .init()
-    }
+    func makeCoordinator() -> Coordinator { .init() }
     
     func makeNSView(context: Context) -> WKWebView {
         let result = WKWebView()
@@ -62,17 +58,7 @@ struct WebView: NSViewRepresentable {
     
     func updateNSView(_ webView: NSViewType, context: Context) {
         assert(Thread.isMainThread)
-        
         context.environment.webViewBox?.value = webView
-        snapshot({
-            assert(Thread.isMainThread)
-            return try! await webView.takeSnapshot(configuration: nil)
-//            await withCheckedContinuation { continuation in
-//                webView.takeSnapshot(with: nil) { image, error in
-//                    continuation.resume(returning: image!)
-//                }
-//            }
-        })
         
         if webView.url != url {
             let request = URLRequest(url: url)
@@ -97,8 +83,6 @@ struct Page: Identifiable, Hashable {
     }
 }
 
-extension NSImage: @unchecked Sendable {}
-
 struct ContentView: View {
     
     @State var store = Store()
@@ -117,16 +101,19 @@ struct ContentView: View {
         } detail: {
             if let selectedPage, let page = store.pages.first(where: { $0.id == selectedPage }) {
                 WebViewReader { proxy in
-                    WebView(url: page.url, snapshot: { takeSnapshot in
-                        self.takeSnapshot = takeSnapshot
-                    })
-                    .toolbar {
-                        Button("Snapshot Alt") {
-                            Task {
-                                image = try await proxy.takeSnapshot()
+                    WebView(url: page.url)
+                        .toolbar {
+                            Button("Snapshot") {
+                                Task {
+                                    // Task inherits MainActor-context here.
+                                    // But the next `await` call doesn't – it 'hops'
+                                    // to another execution context which we don't control.
+                                    // So we can mark the proxy method as MainActor to ensure
+                                    // the WKWebView's snapshot is captured properly.
+                                    image = try await proxy.takeSnapshot()
+                                }
                             }
                         }
-                    }
                 }
                 .overlay {
                     if let i = image {
@@ -148,13 +135,6 @@ struct ContentView: View {
                             store.submit(url: url)
                         }
                     }
-            }
-            ToolbarItem {
-                Button("Take Snapshot") {
-                    Task {
-                        image = await takeSnapshot?()
-                    }
-                }
             }
         }
     }

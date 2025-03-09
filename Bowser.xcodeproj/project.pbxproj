@@ -79,6 +79,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
+				ORGANIZATIONNAME = prayash.io;
 				TargetAttributes = {
 					C43ADFD82D7E1BF400A373A1 = {
 						CreatedOnToolsVersion = 16.2;
@@ -266,7 +267,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.prayash.Bowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -293,7 +294,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.prayash.Bowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
